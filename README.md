@@ -39,17 +39,17 @@ Recommended extras:
 - **Playwright** and **ffmpeg** in the hackathon project.
 
 ```bash
-# Try it for one session (no install):
-claude --plugin-dir /path/to/hackforge
-
-# Install persistently from this folder (it is its own marketplace):
-claude plugin marketplace add /path/to/hackforge
+# Install from GitHub (the repo is its own marketplace):
+claude plugin marketplace add Jusman0/hackforge
 claude plugin install hackforge@hackforge-marketplace
+
+# Or try a local clone for one session (no install):
+git clone https://github.com/Jusman0/hackforge.git
+claude --plugin-dir ./hackforge
 
 # Check:
 claude plugin details hackforge
 ```
-Once the folder is pushed to GitHub, teammates can install it with `claude plugin marketplace add <owner>/<repo>` followed by the same `install` command.
 
 ## Quickstart (in your hackathon repo)
 
