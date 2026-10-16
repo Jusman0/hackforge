@@ -1,0 +1,527 @@
+<!doctype html>
+<!--
+  HackForge pitch deck template: 5 slides, single file, zero dependencies (the Google Font is optional).
+  Copy to .hackforge/ship/PITCH.html (ship-kit / storyteller). Fill every double-brace token from .hackforge/ship/FACTS.md ONLY.
+  A missing fact stays TODO. Never invent URLs, metrics, users, quotes or teammates.
+
+  Order (3-min slot): 1 Title 0:00 → 2 Problem 0:10 → 3 LIVE DEMO 0:30 (switch to the app tab; the backup video lives here)
+                      → 4 How it works 2:00 → 5 Evidence + impact + sponsors + ask 2:30–3:00.
+  Density caps: ≤5 slides, ≤4 bullets per slide, one idea per slide. If a slide does not fit at 1280×720, CUT words;
+  never shrink the type. The HUD (move the mouse) counts leftover double-brace tokens and TODOs and flags overflow or >4 bullets.
+  Keys: → Space PgDn or click right = next · ← PgUp or click left 30% = prev · 1–5 jump · N notes + timer · R reset timer
+        V play/pause backup video · F fullscreen · T light/dark. Swipe on phones.
+  PDF: Chrome → Print → Save as PDF. One light-theme slide per 16:9 page; notes and HUD are not printed. Headless (macOS; spaces in the
+       file URL become %20): "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --no-pdf-header-footer --print-to-pdf="pitch.pdf" "file:///abs/path/PITCH.html"
+  Checked at 1280×720, 1920×1080, 768×1024, 390×844, 375×667, 844×390, 667×375 with realistic copy. Keep DEMO_URL_SHORT ≤ 20 chars.
+  Ideas adapted from ECC skills/frontend-slides (MIT): viewport-fit gate, clamp() type scale, density limits. Code is HackForge's own.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{PROJECT_NAME}} pitch</title>
+<!-- Optional font. Delete these 3 lines for an offline venue: the system stack takes over. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
+<style>
+/* ---------- Theme tokens (edit here to restyle the whole deck) ---------- */
+:root {
+  color-scheme: light dark;
+  --bg: #f5f3ee; --surface: #ffffff; --ink: #15171c; --muted: #5a6170; --line: #d9d5ca;
+  --accent: #c9391f; --accent-ink: #ffffff; --accent-soft: rgba(201, 57, 31, .10);
+  --font: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* --u = 1% of the width of the largest 16:9 box that fits the viewport (12.8px at 1280×720). */
+  --vh: 1vh;
+  --u: min(1vw, calc(var(--vh) * 1.7778));
+  /* Type and spacing scale with the 16:9 box; the clamp() minimums keep phones readable. */
+  --fs-hero:  clamp(2rem,    calc(var(--u) * 6.2), 9rem);
+  --fs-h2:    clamp(1.45rem, calc(var(--u) * 4),   6rem);
+  --fs-stat:  clamp(2.4rem,  calc(var(--u) * 8),  12rem);
+  --fs-lead:  clamp(1.1rem,  calc(var(--u) * 2.6), 4rem);
+  --fs-body:  clamp(1rem,    calc(var(--u) * 2.1), 3.2rem);
+  --fs-small: clamp(.8rem,   calc(var(--u) * 1.4), 2.1rem);
+  --pad:      clamp(1rem,    calc(var(--u) * 5),   8rem);
+  --gap:      clamp(.6rem,   calc(var(--u) * 2),   3rem);
+  --radius:   clamp(6px,     calc(var(--u) * .8),  18px);
+}
+@supports (height: 1dvh) { :root { --vh: 1dvh; } }   /* mobile browser chrome */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101216; --surface: #191c22; --ink: #f2f0ea; --muted: #a3a9b5; --line: #2d323b;
+    --accent: #ff7a5c; --accent-ink: #101216; --accent-soft: rgba(255, 122, 92, .14);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101216; --surface: #191c22; --ink: #f2f0ea; --muted: #a3a9b5; --line: #2d323b;
+  --accent: #ff7a5c; --accent-ink: #101216; --accent-soft: rgba(255, 122, 92, .14);
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); }
+body { font-family: var(--font); font-size: var(--fs-body); line-height: 1.35; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: .15em; }
+b, strong { font-weight: 700; }
+
+/* ---------- Slides: one visible at a time; each content frame is a 16:9 safe box ---------- */
+.slide {
+  position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg);
+  visibility: hidden; opacity: 0; transition: opacity .3s ease, visibility 0s linear .3s;
+}
+.slide.active { visibility: visible; opacity: 1; transition: opacity .3s ease; }
+.frame {
+  width: min(100vw, calc(var(--vh) * 177.78)); height: min(calc(var(--vh) * 100), 56.25vw);
+  padding: var(--pad); display: flex; flex-direction: column; justify-content: center; gap: var(--gap);
+  overflow: hidden; /* viewport-fit gate: never scroll inside a slide at 16:9 */
+  overflow-wrap: anywhere; /* long unbroken tokens/URLs wrap instead of widening columns */
+}
+.frame > * { flex-shrink: 0; } /* nothing silently squashes: too much content overflows and the lint reports it */
+.slide.active .frame > * { animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.slide.active .frame > *:nth-child(2) { animation-delay: .06s; }
+.slide.active .frame > *:nth-child(3) { animation-delay: .12s; }
+.slide.active .frame > *:nth-child(4) { animation-delay: .18s; }
+@keyframes rise { from { opacity: 0; transform: translateY(calc(var(--u) * 1.5)); } }
+
+/* ---------- Type ---------- */
+.kicker { display: flex; align-items: center; gap: .6em; font-size: var(--fs-small); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.kicker::before { content: ""; width: calc(var(--u) * 4); height: .2em; background: var(--accent); border-radius: 2px; }
+.kicker .live-dot { width: .7em; height: .7em; border-radius: 50%; background: var(--accent); animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+h1 { font-size: var(--fs-hero); line-height: 1; letter-spacing: -.03em; font-weight: 700; }
+h2 { font-size: var(--fs-h2); line-height: 1.08; letter-spacing: -.02em; font-weight: 700; max-width: 32ch; }
+h3 { font-size: var(--fs-lead); line-height: 1.15; font-weight: 500; }
+.lead { font-size: var(--fs-lead); line-height: 1.25; max-width: 34ch; }
+.meta, .source, figcaption { font-size: var(--fs-small); color: var(--muted); }
+ul.points, ol.beats { list-style: none; display: grid; gap: calc(var(--gap) * .5); }
+ul.points li { padding-left: 1.1em; position: relative; }
+ul.points li::before { content: ""; position: absolute; left: 0; top: .55em; width: .45em; height: .45em; background: var(--accent); border-radius: 2px; }
+ol.beats { counter-reset: beat; }
+ol.beats li { counter-increment: beat; display: flex; gap: .6em; align-items: baseline; }
+ol.beats li::before { content: counter(beat); font-family: var(--mono); font-size: var(--fs-small); color: var(--accent-ink);
+  background: var(--accent); border-radius: 999px; min-width: 1.7em; text-align: center; padding: .1em .4em; }
+
+/* ---------- Building blocks ---------- */
+.cols { display: grid; grid-template-columns: 5fr 6fr; gap: calc(var(--gap) * 1.5); align-items: center; min-height: 0; }
+.cols.demo { grid-template-columns: 7fr 5fr; }
+.stat { display: grid; gap: calc(var(--gap) * .35); align-content: start; }
+.stat-num { font-size: var(--fs-stat); line-height: .95; font-weight: 700; letter-spacing: -.04em; color: var(--accent); }
+.stat-label { font-size: var(--fs-lead); line-height: 1.2; }
+.side { display: grid; gap: var(--gap); align-content: center; min-height: 0; }
+.side h2 { font-size: var(--fs-lead); line-height: 1.15; } /* narrow column: smaller headline so the QR still fits */
+.card h3 + ul { margin-top: calc(var(--gap) * .6); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: calc(var(--gap) * 1.1); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.stats .stat-num { font-size: var(--fs-h2); }
+.stats .stat-label { font-size: var(--fs-small); color: var(--muted); }
+blockquote.stat { font-size: var(--fs-body); font-style: italic; line-height: 1.3; }
+.chip { display: inline-block; font-size: var(--fs-small); border: 1px solid var(--line); border-radius: 999px; padding: .2em .8em; color: var(--muted); }
+
+/* Demo slide: backup video + QR. A missing video or QR shows a dashed placeholder, not a broken icon. */
+.video-slot { position: relative; display: grid; gap: calc(var(--gap) * .4); min-height: 0; }
+.video-slot video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius); border: 1px solid var(--line); }
+.video-slot.missing video { visibility: hidden; }
+.video-slot.missing::after { content: "Backup video missing: set BACKUP_VIDEO_SRC"; position: absolute; inset: 0 0 auto 0;
+  aspect-ratio: 16 / 9; display: grid; place-items: center; text-align: center; padding: 1em; font-size: var(--fs-small);
+  color: var(--muted); border: 2px dashed var(--line); border-radius: var(--radius); }
+.try { display: flex; align-items: center; gap: var(--gap); }
+.qr-box { position: relative; flex: none; width: clamp(4.5rem, calc(var(--u) * 11), 15rem); aspect-ratio: 1; background: #fff;
+  border: 2px dashed var(--line); border-radius: var(--radius); font-family: var(--mono); font-size: var(--fs-small); color: #888; }
+.qr-box::before { content: "QR"; position: absolute; inset: 0; display: grid; place-items: center; }
+.qr-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; border-radius: inherit; }
+.qr-box img.missing { visibility: hidden; }
+.url { font-family: var(--mono); font-size: calc(var(--fs-body) * .85); font-weight: 500; overflow-wrap: anywhere; } /* keep DEMO_URL_SHORT ≤ 20 chars */
+
+/* Architecture diagram (inline SVG, themed via tokens). Horizontal at 16:9 (fills the space left over, within limits);
+   vertical on portrait phones. */
+.arch { flex: 1 1 0; min-height: calc(var(--u) * 11); max-height: calc(var(--u) * 24); }
+.arch svg { width: 100%; display: block; }
+.arch .arch-h { height: 100%; }
+.arch .arch-v { display: none; height: auto; max-height: 50vh; }
+.arch rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.arch .hot rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3; }
+.arch .role { fill: var(--muted); font: 700 15px var(--font); letter-spacing: .12em; text-transform: uppercase; }
+.arch .label { fill: var(--ink); font: 700 20px var(--font); }
+.arch .tag { fill: var(--accent); font: 700 15px var(--font); letter-spacing: .08em; }
+.arch .wire { stroke: var(--muted); stroke-width: 2.5; fill: none; }
+.arch .head { fill: var(--muted); }
+
+/* ---------- Speaker notes (N) ---------- */
+.notes { display: none; }
+body.notes-on .slide.active .notes {
+  display: block; position: fixed; left: 0; right: 0; bottom: 0; max-height: 42vh; overflow: auto; z-index: 5;
+  background: var(--surface); border-top: 3px solid var(--accent); padding: 1rem clamp(1rem, 4vw, 3rem) 1.25rem;
+  font-size: clamp(.95rem, 1.6vw, 1.25rem); line-height: 1.45; box-shadow: 0 -10px 30px rgba(0, 0, 0, .18);
+}
+.notes p + p, .notes ul { margin-top: .5em; }
+.notes ul { padding-left: 1.2em; }
+.notes .budget { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+
+/* ---------- HUD: counter, prev/next, lint. Fades when the mouse is idle. ---------- */
+.hud { position: fixed; right: .75rem; bottom: .75rem; z-index: 6; display: flex; align-items: center; gap: .5rem;
+  font: 500 .8rem/1 var(--mono); color: var(--muted); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: .35rem .5rem; transition: opacity .4s; }
+.hud button { font: inherit; color: var(--ink); background: none; border: 0; cursor: pointer; padding: .2rem .45rem; border-radius: 999px; }
+.hud button:hover, .hud button:focus-visible { background: var(--accent-soft); outline: none; }
+#lint { color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: .25rem .6rem; max-width: 50vw;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#timer { display: none; color: var(--accent); }
+body.idle .hud { opacity: 0; }
+body.idle { cursor: none; }
+body.notes-on #timer { display: inline; }
+body.notes-on .hud { top: .75rem; bottom: auto; opacity: 1; } /* keep the timer visible while rehearsing */
+
+/* ---------- Phones ---------- */
+/* Portrait: drop the 16:9 box, stack columns, allow vertical scroll as a safety net. */
+@media (max-aspect-ratio: 1/1) {
+  :root { --u: 1vw; }
+  .frame { width: 100vw; height: calc(var(--vh) * 100); justify-content: safe center; overflow-y: auto; }
+  .cols, .cols.demo, .stats { grid-template-columns: 1fr; }
+  .arch { flex: none; min-height: 0; max-height: none; }
+  .arch .arch-h { display: none; }
+  .arch .arch-v { display: block; }
+  .hud .keys { display: none; }
+}
+/* Landscape phone (short viewport): tighten spacing and minimums. */
+@media (max-height: 500px) {
+  :root {
+    --pad: clamp(.6rem, calc(var(--u) * 3.5), 2rem); --gap: clamp(.35rem, calc(var(--u) * 1.4), 1rem);
+    --fs-body: clamp(.8rem, calc(var(--u) * 2.1), 1.2rem); --fs-small: clamp(.68rem, calc(var(--u) * 1.4), .9rem);
+    --fs-lead: clamp(.9rem, calc(var(--u) * 2.6), 1.4rem); --fs-h2: clamp(1.1rem, calc(var(--u) * 4), 2rem);
+    --fs-hero: clamp(1.5rem, calc(var(--u) * 6.2), 3rem); --fs-stat: clamp(1.6rem, calc(var(--u) * 8), 3.6rem);
+  }
+  .hud .keys { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide, .slide.active { transition: none; }
+  .slide.active .frame > *, .kicker .live-dot { animation: none; }
+}
+
+/* ---------- Print / PDF: one slide per 16:9 page (1280×720 CSS px), light theme, no HUD or notes ---------- */
+@page { size: 13.333in 7.5in; margin: 0; }
+@media print {
+  :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+    --u: 12.8px; --bg: #f5f3ee; --surface: #ffffff; --ink: #15171c; --muted: #5a6170; --line: #d9d5ca;
+    --accent: #c9391f; --accent-ink: #ffffff; --accent-soft: rgba(201, 57, 31, .10);
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { height: auto; overflow: visible; }
+  .slide { position: relative; inset: auto; width: 13.333in; height: 7.5in; visibility: visible; opacity: 1;
+    transition: none; break-after: page; page-break-after: always; overflow: hidden; }
+  .slide:last-of-type { break-after: auto; page-break-after: auto; }
+  .frame { width: 100%; height: 100%; }
+  .slide .frame > * { animation: none !important; }
+  .hud, .notes, body.notes-on .slide.active .notes { display: none !important; }
+}
+</style>
+<noscript><style>.slide { position: relative; visibility: visible; opacity: 1; height: 100vh; } html, body { overflow: auto; }</style></noscript>
+</head>
+<body>
+<main id="deck" aria-label="Pitch deck: {{PROJECT_NAME}}">
+
+  <!-- ===== 1. TITLE: name, one-liner, the named user (0:00–0:10) ===== -->
+  <section class="slide" aria-roledescription="slide" aria-label="1 of 5: Title" data-time="0:00–0:10">
+    <div class="frame">
+      <p class="kicker">{{EVENT_NAME}} · {{TRACK}}</p>
+      <h1>{{PROJECT_NAME}}</h1>
+      <!-- ONE_LINER formula (ideas/IDEA.md): "<Name> helps <named user> <do task> in <time/$> instead of <status quo>." -->
+      <p class="lead">{{ONE_LINER}}</p>
+      <p><span class="chip">For: {{NAMED_USER}}</span> <span class="meta">{{TEAM_NAMES}}</span></p>
+    </div>
+    <aside class="notes">
+      <p><span class="budget">0:00–0:10 · ~25 words</span> Say the one-liner exactly as written. Name the user out loud.
+        MLH: say the hackathon name. Do not explain the tech yet.</p>
+      <p>Transition: "Here is what that costs them today."</p>
+    </aside>
+  </section>
+
+  <!-- ===== 2. PROBLEM: one number with its source + today's workaround (0:10–0:30) ===== -->
+  <section class="slide" aria-roledescription="slide" aria-label="2 of 5: Problem" data-time="0:10–0:30">
+    <div class="frame">
+      <p class="kicker">The problem</p>
+      <div class="cols">
+        <div class="stat">
+          <span class="stat-num">{{PAIN_NUMBER}}</span>
+          <span class="stat-label">{{PAIN_NUMBER_LABEL}}</span>
+          <!-- Pitch claims need 2 independent sources (FACTS.md / research/claims.json). Show one here, keep both in FACTS. -->
+          <a class="source" href="{{PAIN_SOURCE_URL}}">Source: {{PAIN_SOURCE_NAME}}</a>
+        </div>
+        <div class="card">
+          <h3>Today's workaround</h3>
+          <ul class="points">
+            <li>{{WORKAROUND_STEP_1}}</li>
+            <li>{{WORKAROUND_STEP_2}}</li>
+            <li>{{WORKAROUND_COST}}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><span class="budget">0:10–0:30 · ~50 words</span> A real person and a real number, with where it comes from.
+        One sentence on how they cope today and what it costs them.</p>
+      <p>Transition: "Let me show you instead." Then switch slides and go straight to the app.</p>
+    </aside>
+  </section>
+
+  <!-- ===== 3. LIVE DEMO: switch to the pre-opened app tab; the backup recording is here (0:30–2:00) ===== -->
+  <section class="slide" aria-roledescription="slide" aria-label="3 of 5: Live demo" data-time="0:30–2:00">
+    <div class="frame">
+      <p class="kicker"><span class="live-dot" aria-hidden="true"></span>Live demo</p>
+      <div class="cols demo">
+        <figure class="video-slot">
+          <!-- Backup = MP4 from demo/record-demo.mjs + ffmpeg. From .hackforge/ship/ use e.g. ../../demo/out/demo.mp4 (keep it on local disk).
+               Muted on purpose: you narrate live. A poster frame keeps the PDF meaningful. -->
+          <video id="backup-video" src="{{BACKUP_VIDEO_SRC}}" poster="{{BACKUP_VIDEO_POSTER}}" controls muted playsinline preload="metadata"></video>
+          <figcaption>Backup recording: press V if the live demo fails</figcaption>
+        </figure>
+        <div class="side">
+          <h2>{{AHA_HEADLINE}}</h2>
+          <ol class="beats">
+            <li>{{DEMO_BEAT_1}}</li>
+            <li>{{DEMO_BEAT_2}}</li>
+            <li>{{DEMO_BEAT_AHA}}</li>
+          </ol>
+          <div class="try">
+            <!-- QR of the PRODUCTION ALIAS (never the deployment-hash URL). Use a local PNG or a data: URI to stay single-file. -->
+            <div class="qr-box"><img class="qr" src="{{QR_IMG_SRC}}" alt="QR code for {{DEMO_URL}}"></div>
+            <div><p class="meta">Try it yourself</p><a class="url" href="{{DEMO_URL}}">{{DEMO_URL_SHORT}}</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><span class="budget">0:30–2:00 · ~225 words · aha by 1:00</span> Follow spec/DEMO_SCRIPT.md. Narrate the hidden work
+        (retrieval, agents, verification), not the clicks.</p>
+      <ul>
+        <li>Before going on: DEMO_MODE=1, seed data reset, app tab pre-opened and zoomed, notifications off, hotspot ready.</li>
+        <li>Show the before/after. Then run one judge-style input variant.</li>
+        <li>If anything stalls for more than 5 s: come back here, press V, keep narrating over the recording.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ===== 4. HOW IT WORKS: one diagram, the hard part, model + why, how quality was measured (2:00–2:30) ===== -->
+  <section class="slide" aria-roledescription="slide" aria-label="4 of 5: How it works" data-time="2:00–2:30">
+    <div class="frame">
+      <p class="kicker">How it works</p>
+      <h2>{{HARD_PART_HEADLINE}}</h2>
+      <!-- Keep each ARCH_* label ≤ 14 characters (SVG text does not wrap). Move class="hot" (and the THE HARD PART tag) to the node that holds the hard part, in both SVGs. -->
+      <figure class="arch" role="img" aria-label="Architecture: {{ARCH_INPUT}} to {{ARCH_CORE}} to {{ARCH_MODEL}} to {{ARCH_OUTPUT}}">
+        <svg class="arch-h" viewBox="0 0 1020 250" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs><marker id="ah-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M0 0L10 5L0 10z"/></marker></defs>
+          <g><rect x="10" y="70" width="220" height="110" rx="14"/><text class="role" x="30" y="108">Input</text><text class="label" x="30" y="148">{{ARCH_INPUT}}</text></g>
+          <g class="hot"><rect x="270" y="70" width="220" height="110" rx="14"/><text class="role" x="290" y="108">Core (code)</text><text class="label" x="290" y="148">{{ARCH_CORE}}</text>
+            <text class="tag" x="290" y="52">THE HARD PART</text></g>
+          <g><rect x="530" y="70" width="220" height="110" rx="14"/><text class="role" x="550" y="108">Model</text><text class="label" x="550" y="148">{{ARCH_MODEL}}</text>
+            <text class="tag" x="550" y="214">{{ARCH_SPONSOR}}</text></g>
+          <g><rect x="790" y="70" width="220" height="110" rx="14"/><text class="role" x="810" y="108">Artifact</text><text class="label" x="810" y="148">{{ARCH_OUTPUT}}</text></g>
+          <path class="wire" d="M230 125H266" marker-end="url(#ah-h)"/><path class="wire" d="M490 125H526" marker-end="url(#ah-h)"/><path class="wire" d="M750 125H786" marker-end="url(#ah-h)"/>
+        </svg>
+        <svg class="arch-v" viewBox="0 0 400 430" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs><marker id="ah-v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M0 0L10 5L0 10z"/></marker></defs>
+          <g><rect x="20" y="8" width="360" height="84" rx="14"/><text class="role" x="44" y="40">Input</text><text class="label" x="44" y="74">{{ARCH_INPUT}}</text></g>
+          <g class="hot"><rect x="20" y="118" width="360" height="84" rx="14"/><text class="role" x="44" y="150">Core (code) · hard part</text><text class="label" x="44" y="184">{{ARCH_CORE}}</text></g>
+          <g><rect x="20" y="228" width="360" height="84" rx="14"/><text class="role" x="44" y="260">Model · {{ARCH_SPONSOR}}</text><text class="label" x="44" y="294">{{ARCH_MODEL}}</text></g>
+          <g><rect x="20" y="338" width="360" height="84" rx="14"/><text class="role" x="44" y="370">Artifact</text><text class="label" x="44" y="404">{{ARCH_OUTPUT}}</text></g>
+          <path class="wire" d="M200 92V114" marker-end="url(#ah-v)"/><path class="wire" d="M200 202V224" marker-end="url(#ah-v)"/><path class="wire" d="M200 312V334" marker-end="url(#ah-v)"/>
+        </svg>
+      </figure>
+      <ul class="points">
+        <li><b>Hard part:</b> {{HARD_PART}}</li>
+        <li><b>Why {{MODEL_NAME}}:</b> {{WHY_MODEL_OVER_OBVIOUS_ALTERNATIVE}}</li>
+        <li><b>Quality measured by:</b> {{EVAL_METHOD}}</li>
+      </ul>
+    </div>
+    <aside class="notes">
+      <p><span class="budget">2:00–2:30 · ~75 words</span> One diagram, one hard decision. Name the model and why it beat the
+        obvious alternative. Say how you measured output quality. Point at the sponsor tech in the diagram.</p>
+      <p>If asked "what is real?": answer from spec/FAKE_VS_REAL.md, word for word.</p>
+    </aside>
+  </section>
+
+  <!-- ===== 5. EVIDENCE + IMPACT + SPONSOR TECH + ASK / NEXT (2:30–3:00) ===== -->
+  <section class="slide" aria-roledescription="slide" aria-label="5 of 5: Evidence and impact" data-time="2:30–3:00">
+    <div class="frame">
+      <p class="kicker">Evidence &amp; impact</p>
+      <div class="stats">
+        <div class="stat card"><span class="stat-num">{{EVAL_RESULT}}</span><span class="stat-label">{{EVAL_METRIC}} on {{EVAL_DATASET}}</span></div>
+        <div class="stat card"><span class="stat-num">{{BEFORE}} → {{AFTER}}</span><span class="stat-label">{{BEFORE_AFTER_LABEL}}</span></div>
+        <!-- Paraphrase scraped user quotes, link the source, no usernames (DESIGN §7). Delete this card if you have no real quote. -->
+        <blockquote class="stat card">{{USER_QUOTE_PARAPHRASED}} <a class="source" href="{{QUOTE_SOURCE_URL}}">source</a></blockquote>
+      </div>
+      <ul class="points">
+        <li><b>Impact:</b> {{IMPACT}}</li>
+        <li><b>Built with {{SPONSOR_TECH}}:</b> {{SPONSOR_ROLE_ON_GOLDEN_PATH}}</li>
+        <li><b>Next:</b> {{NEXT_STEP}}</li>
+        <li><b>Ask:</b> {{ASK}}</li>
+      </ul>
+      <p class="meta">{{TEAM_NAMES}} · <a href="{{DEMO_URL}}">{{DEMO_URL_SHORT}}</a> · <a href="{{REPO_URL}}">{{REPO_URL_SHORT}}</a></p>
+    </div>
+    <aside class="notes">
+      <p><span class="budget">2:30–3:00 · ~75 words</span> Numbers first, then who adopts it. Mention pilot interest only if it is
+        real and in FACTS.md. Name each sponsor tech you claim (it must also be in the video and the README). End on the ask, then "thank you".</p>
+      <p>Q&amp;A drill: .hackforge/build/QA_DRILL.md (who pays, real vs mocked, why this model, what AI wrote vs you).</p>
+    </aside>
+  </section>
+
+</main>
+
+<nav class="hud" aria-label="Deck controls">
+  <button id="prev" type="button" aria-label="Previous slide">&#8249;</button>
+  <span id="counter" aria-live="polite">1 / 5</span>
+  <button id="next" type="button" aria-label="Next slide">&#8250;</button>
+  <span id="timer" aria-live="off"></span>
+  <span class="keys">N notes · V video · F full · T theme</span>
+  <span id="lint" hidden></span>
+</nav>
+
+<script>
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  const body = document.body;
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const timerEl = document.getElementById('timer');
+  const lintEl = document.getElementById('lint');
+  const video = document.getElementById('backup-video');
+  const demoIndex = video ? slides.findIndex((s) => s.contains(video)) : -1;
+  let current = 0;
+  let startedAt = 0;
+
+  // Per-viewer convenience only: remembered theme. Storage may be blocked (private mode), so never rely on it.
+  try { const t = localStorage.getItem('hackforge-pitch-theme'); if (t === 'dark' || t === 'light') root.dataset.theme = t; } catch (_) {}
+
+  function go(i) {
+    const n = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => {
+      const on = k === n;
+      s.classList.toggle('active', on);
+      s.toggleAttribute('inert', !on);          // hidden slides are not focusable
+      s.setAttribute('aria-hidden', String(!on));
+    });
+    if (video && n !== demoIndex && !video.paused) video.pause();
+    if (!startedAt && n > 0) startedAt = Date.now(); // timer starts when you leave the title slide
+    current = n;
+    counter.textContent = (n + 1) + ' / ' + slides.length;
+    history.replaceState(null, '', '#' + (n + 1)); // reload keeps your place; no history spam
+    updateTimer();
+  }
+
+  const fmt = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  function updateTimer() {
+    if (!body.classList.contains('notes-on')) return;
+    const s = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
+    timerEl.textContent = fmt(s) + ' · slot ' + (slides[current].dataset.time || '');
+  }
+  setInterval(updateTimer, 1000);
+
+  function toggleVideo() {
+    if (!video) return;
+    if (current !== demoIndex) go(demoIndex);
+    if (video.paused) video.play().catch(() => {}); else video.pause();
+  }
+  function toggleFullscreen() {
+    if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen(); return; }
+    const p = root.requestFullscreen && root.requestFullscreen();
+    if (p && p.catch) p.catch(() => {});
+  }
+  function toggleTheme() {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('hackforge-pitch-theme', root.dataset.theme); } catch (_) {}
+  }
+
+  // Keyboard. Modifier combos pass through (Cmd/Ctrl+P must still print).
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target instanceof Element ? e.target : body;
+    if (t.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const onControl = t.closest('button, a, video'); // let Space/Enter activate the focused control
+    const k = e.key;
+    let handled = true;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown') go(current + 1);
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') go(current - 1);
+    else if ((k === ' ' || k === 'Enter') && !onControl) go(current + (e.shiftKey ? -1 : 1));
+    else if (k === 'Home') go(0);
+    else if (k === 'End') go(slides.length - 1);
+    else if (/^[1-9]$/.test(k)) go(Number(k) - 1);
+    else if (k === 'n' || k === 'N') { body.classList.toggle('notes-on'); updateTimer(); }
+    else if (k === 'r' || k === 'R') { startedAt = Date.now(); updateTimer(); }
+    else if (k === 'v' || k === 'V') toggleVideo();
+    else if (k === 'f' || k === 'F') toggleFullscreen();
+    else if (k === 't' || k === 'T') toggleTheme();
+    else handled = false;
+    if (handled) e.preventDefault();
+  });
+
+  // Click: left 30% = back, elsewhere = forward. Links, buttons, video and notes keep their own behaviour.
+  deck.addEventListener('click', (e) => {
+    if (e.target.closest('a, button, video, .notes, input, textarea, select')) return;
+    if (String(window.getSelection()).length) return;
+    go(current + (e.clientX < window.innerWidth * 0.3 ? -1 : 1));
+  });
+  document.getElementById('prev').addEventListener('click', () => go(current - 1));
+  document.getElementById('next').addEventListener('click', () => go(current + 1));
+
+  // Touch: horizontal swipe only, so vertical scrolling on portrait phones still works.
+  let tx = 0, ty = 0;
+  deck.addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(current + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  // HUD fades after 2.5 s without input; the cursor hides with it.
+  let idleTimer = 0;
+  const wake = () => { body.classList.remove('idle'); clearTimeout(idleTimer); idleTimer = setTimeout(() => body.classList.add('idle'), 2500); };
+  ['mousemove', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, wake, { passive: true }));
+  wake();
+
+  // Missing media show dashed placeholders instead of broken icons.
+  if (video) {
+    const slot = video.closest('.video-slot');
+    const miss = () => slot && slot.classList.add('missing');
+    if ((video.getAttribute('src') || '').includes('{' + '{')) miss(); else video.addEventListener('error', miss);
+  }
+  document.querySelectorAll('img.qr').forEach((img) => {
+    const miss = () => img.classList.add('missing');
+    if ((img.getAttribute('src') || '').includes('{' + '{') || (img.complete && img.naturalWidth === 0)) miss();
+    img.addEventListener('error', miss);
+  });
+
+  // Lint (the viewport-fit and density gate): leftover placeholders, >4 bullets, >5 slides, overflow at this size.
+  function lint() {
+    const issues = [];
+    const html = deck.innerHTML.replace(/<!--[\s\S]*?-->/g, '');
+    const holes = (html.match(/\{\{[A-Z0-9_]+\}\}/g) || []).length + (html.match(/\bTODO\b/g) || []).length;
+    if (holes) issues.push(holes + ' placeholder' + (holes > 1 ? 's' : '') + ' left');
+    if (slides.length > 5) issues.push(slides.length + ' slides (max 5)');
+    slides.forEach((s, k) => {
+      const f = s.querySelector('.frame');
+      const bullets = f.querySelectorAll('li').length;
+      if (bullets > 4) issues.push('slide ' + (k + 1) + ': ' + bullets + ' bullets (max 4)');
+      if (f.scrollHeight > f.clientHeight + 2 || f.scrollWidth > f.clientWidth + 2) {
+        issues.push('slide ' + (k + 1) + ' overflows at ' + window.innerWidth + 'x' + window.innerHeight);
+      }
+    });
+    lintEl.hidden = issues.length === 0;
+    lintEl.textContent = issues.join(' · ');
+    lintEl.title = issues.join('\n');
+    if (issues.length) console.warn('[pitch lint]\n' + issues.join('\n'));
+  }
+  let lintTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(lintTimer); lintTimer = setTimeout(lint, 200); });
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(lint);
+
+  const fromHash = () => { const n = parseInt(location.hash.slice(1), 10); return Number.isFinite(n) ? n - 1 : 0; };
+  window.addEventListener('hashchange', () => go(fromHash()));
+  go(fromHash());
+})();
+</script>
+</body>
+</html>

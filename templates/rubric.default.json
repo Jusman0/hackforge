@@ -1,0 +1,110 @@
+{
+  "source": "default",
+  "note": "HackForge Default Judge Rubric (playbook judging.md). Replace with the event's published criteria and weights during /hackforge:kickoff.",
+  "criteria": [
+    {
+      "id": "D",
+      "name": "Working demo & completeness",
+      "weight": 25,
+      "anchors": {
+        "1": "Slides or a mock; crashes",
+        "3": "Golden path works with some rough edges",
+        "5": "Works live first try with real input, survives a judge's own input, and is deployed"
+      }
+    },
+    {
+      "id": "T",
+      "name": "Technical depth & execution",
+      "weight": 20,
+      "anchors": {
+        "1": "API call plus UI",
+        "3": "One non-trivial component",
+        "5": "A clearly narrated hard part (orchestration, eval loop, real-time engine, vision pipeline) and iteration past v1"
+      }
+    },
+    {
+      "id": "I",
+      "name": "Impact (specific user, credible)",
+      "weight": 20,
+      "anchors": {
+        "1": "'Everyone'",
+        "3": "Named user segment",
+        "5": "Named user, quantified pain (time/$), today's workaround, before/after shown in the demo"
+      }
+    },
+    {
+      "id": "O",
+      "name": "Originality / quality of idea",
+      "weight": 15,
+      "anchors": {
+        "1": "Fatigue category",
+        "3": "Fresh angle on a known problem",
+        "5": "Non-obvious capability ('didn't know models could do that')"
+      }
+    },
+    {
+      "id": "S",
+      "name": "Required-tech / sponsor use",
+      "weight": 10,
+      "anchors": {
+        "1": "Logo-stuffing",
+        "3": "Integrated",
+        "5": "Load-bearing and creative; the demo collapses without it"
+      }
+    },
+    {
+      "id": "U",
+      "name": "Design/UX & clarity",
+      "weight": 10,
+      "anchors": {
+        "1": "Confusing",
+        "3": "Clean",
+        "5": "A judge outside the domain can restate what it does after 1 minute"
+      }
+    }
+  ],
+  "stage1Gates": [
+    "Fits the theme or a published track",
+    "Required sponsor API (if any) is visibly used on the golden path"
+  ],
+  "tieBreak": [
+    "D"
+  ],
+  "ideaWeights": {
+    "P": 0.2,
+    "W": 0.2,
+    "A": 0.15,
+    "T": 0.15,
+    "S": 0.1,
+    "N": 0.1,
+    "E": 0.1
+  },
+  "video": {
+    "maxSeconds": 180,
+    "minSeconds": 0,
+    "minHeight": 720,
+    "visibility": "public-or-unlisted",
+    "ttsAllowed": false,
+    "bans": [],
+    "mustInclude": []
+  },
+  "prizeStacking": "unknown",
+  "preExistingCode": "unknown",
+  "aiDisclosure": true,
+  "openSourceRequired": false,
+  "teamMax": 4,
+  "submissionFields": [
+    "title",
+    "tagline",
+    "story",
+    "built_with",
+    "video",
+    "repo",
+    "demo_url"
+  ],
+  "limits": {
+    "titleChars": 60,
+    "taglineChars": 200,
+    "summaryWords": null
+  }
+}

@@ -1,0 +1,14 @@
+# Dependencies / OS / editor
+node_modules/
+.DS_Store
+*.log
+
+# Secrets — never commit real keys
+.env
+.env.*
+!.env.example
+
+# HackForge project state belongs in each hackathon repo, not in the plugin
+.hackforge/
+test-results/
+demo/out/

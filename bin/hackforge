@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+// HackForge CLI entry point. CommonJS shim that loads the ESM implementation, so it runs
+// without a package.json "type" field wherever the plugin is installed.
+const path = require('node:path')
+const { pathToFileURL } = require('node:url')
+
+const major = Number(process.versions.node.split('.')[0])
+if (major < 18) {
+  process.stderr.write(`hackforge needs Node >= 18 (found ${process.versions.node})\n`)
+  process.exit(1)
+}
+
+import(pathToFileURL(path.join(__dirname, '..', 'lib', 'cli.mjs')).href)
+  .then(m => m.main(process.argv.slice(2)))
+  .catch(err => {
+    process.stderr.write(`hackforge: unexpected error: ${err && err.stack ? err.stack : err}\n`)
+    process.exit(70)
+  })

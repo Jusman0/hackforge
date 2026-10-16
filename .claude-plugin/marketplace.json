@@ -1,0 +1,14 @@
+{
+  "name": "hackforge-marketplace",
+  "description": "HackForge — a lean, research-grounded hackathon harness for Claude Code",
+  "owner": { "name": "HackForge contributors" },
+  "plugins": [
+    {
+      "name": "hackforge",
+      "source": "./",
+      "description": "Theme → live research → scored idea → demo-first build → judge-ready submission, with a deadline clock and guardrails",
+      "category": "productivity",
+      "tags": ["hackathon", "research", "workflow"]
+    }
+  ]
+}

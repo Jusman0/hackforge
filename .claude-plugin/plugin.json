@@ -1,0 +1,17 @@
+{
+  "name": "hackforge",
+  "displayName": "HackForge",
+  "version": "0.1.0",
+  "description": "Hackathon harness: research a theme with live web data (Bright Data, GitHub, HN, papers), run an idea tournament scored against the event rubric, build demo-first with a separate QA judge, and ship a judge-ready submission — with a deadline clock and guardrails.",
+  "author": { "name": "HackForge contributors" },
+  "license": "MIT",
+  "keywords": ["hackathon", "research", "ideation", "workflow", "bright-data", "demo", "pitch", "devpost"],
+  "userConfig": {
+    "hook_profile": {
+      "type": "string",
+      "title": "Hook profile",
+      "description": "off = no guardrails; fast = ask on risky git/judge-file edits (default); safe = deny them and ask on code edits after feature freeze.",
+      "default": "fast"
+    }
+  }
+}
